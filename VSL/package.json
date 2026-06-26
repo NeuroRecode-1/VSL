@@ -1,0 +1,16 @@
+{
+  "name": "neuro-recode-vsl",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "vercel": "^50.0.0"
+  }
+}

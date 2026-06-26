@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Checkout — Neuro Recode Live Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+:root {
+  --purple-dark:    #FAF9FF;
+  --purple-mid:     #F0EBFF;
+  --purple-surface: #FFFFFF;
+  --purple-card:    #FFFFFF;
+  --gold:           #C99010;
+  --gold-light:     #E8A820;
+  --gold-dim:       rgba(201,144,16,0.12);
+  --gold-border:    rgba(201,144,16,0.28);
+  --white:          #1A0838;
+  --muted:          #4A3D6A;
+  --dim:            #7A6890;
+  --border:         rgba(74,24,154,0.12);
+  --error:          #FF6B6B;
+  --success:        #4ADE80;
+  --radius:         10px;
+  --radius-lg:      16px;
+}
+body { font-family: 'Inter', sans-serif; background: #FAF9FF; color: #1A0838; min-height: 100vh; line-height: 1.6; }
+.pulse-line { height: 2px; background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent); background-size: 200% 100%; animation: sweep 3s ease-in-out infinite; }
+@keyframes sweep { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@media (prefers-reduced-motion:reduce){ .pulse-line{animation:none;opacity:.4} }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid rgba(255,255,255,0.10); background: #5C1FA0; }
+.nav-logo { text-decoration: none; display: flex; align-items: center; line-height: 1; font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #FFFFFF; }
+.nav-logo em { color: #E8A820; font-style: normal; }
+.nav-secure { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.75); }
+.nav-secure svg { color: #E8A820; }
+.progress-bar { background: #F0EBFF; padding: 12px 32px; display: flex; align-items: center; justify-content: center; gap: 0; }
+.progress-step { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: #7A6890; }
+.progress-step.active { color: #4B1A9E; }
+.progress-step.done { color: var(--success); }
+.step-dot { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+.progress-step.active .step-dot { background: var(--gold); border-color: var(--gold); color: var(--purple-dark); }
+.progress-step.done .step-dot { background: var(--success); border-color: var(--success); color: var(--purple-dark); }
+.progress-line { width: 60px; height: 1.5px; background: var(--border); margin: 0 8px; }
+.progress-line.done { background: var(--success); }
+.page-wrap { max-width: 1020px; margin: 0 auto; padding: 48px 24px 80px; display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: start; }
+@media (max-width: 760px) { .page-wrap { grid-template-columns: 1fr; padding: 32px 20px 60px; } .order-summary { order: -1; } }
+.form-section-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; color: #1A0838; }
+.form-section-sub { font-size: 13px; color: #4A3D6A; margin-bottom: 28px; }
+.field-group { margin-bottom: 20px; }
+.field-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6890; margin-bottom: 8px; }
+.field-input { width: 100%; background: #FFFFFF; border: 1px solid rgba(74,24,154,0.18); border-radius: var(--radius); color: #1A0838; font-family: 'Inter', sans-serif; font-size: 15px; padding: 13px 16px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; }
+.field-input::placeholder { color: #9A8AB0; }
+.field-input:focus { border-color: #4B1A9E; box-shadow: 0 0 0 3px rgba(74,24,154,0.10); }
+.field-input.error { border-color: var(--error); }
+.field-error { font-size: 11px; color: var(--error); margin-top: 5px; display: none; }
+.field-error.visible { display: block; }
+.field-hint { font-size: 11px; color: #9A8AB0; margin-top: 5px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+.phone-wrap { display: flex; gap: 0; }
+.phone-prefix { background: #F0EBFF; border: 1px solid rgba(74,24,154,0.18); border-right: none; border-radius: var(--radius) 0 0 var(--radius); color: #4A3D6A; font-size: 14px; font-weight: 500; padding: 13px 14px; white-space: nowrap; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.phone-wrap .field-input { border-radius: 0 var(--radius) var(--radius) 0; }
+.form-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.order-summary { background: #FFFFFF; border: 1px solid rgba(74,24,154,0.14); border-radius: var(--radius-lg); padding: 28px 24px; position: static; box-shadow: 0 4px 20px rgba(74,24,154,0.06); }
+.summary-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #C99010; margin-bottom: 16px; }
+.summary-product { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.summary-icon { width: 48px; height: 48px; border-radius: 10px; background: var(--gold-dim); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.summary-icon svg { color: var(--gold); }
+.summary-product-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; color: #1A0838; }
+.summary-product-meta { font-size: 12px; color: #4A3D6A; }
+.summary-line { display: flex; justify-content: space-between; font-size: 13px; color: #4A3D6A; margin-bottom: 10px; }
+.summary-line.total { font-size: 16px; font-weight: 600; color: #1A0838; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(74,24,154,0.12); margin-bottom: 0; }
+.summary-line .strike { text-decoration: line-through; color: #9A8AB0; }
+.summary-line .save-badge { background: rgba(74,222,128,0.12); color: var(--success); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.summary-includes { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+.summary-includes-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #7A6890; margin-bottom: 12px; }
+.summary-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #4A3D6A; margin-bottom: 9px; line-height: 1.5; }
+.summary-item svg { color: #C99010; flex-shrink: 0; margin-top: 1px; }
+.seat-counter { display: flex; align-items: center; gap: 8px; background: rgba(255,107,107,0.10); border: 1px solid rgba(255,107,107,0.25); border-radius: 8px; padding: 10px 14px; margin-top: 18px; font-size: 12px; color: #FF9090; font-weight: 500; }
+.seat-dot { width: 7px; height: 7px; border-radius: 50%; background: #FF6B6B; flex-shrink: 0; animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+.btn-pay { width: 100%; background: #4B1A9E; color: #E8A820; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; padding: 17px 24px; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(201,168,76,0.30); margin-top: 24px; letter-spacing: 0.01em; position: relative; overflow: hidden; }
+.btn-pay:hover { background: #5C1FA0; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(74,24,154,0.35); }
+.btn-pay:active { transform: scale(0.98); }
+.btn-pay:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-pay .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(26,10,56,0.3); border-top-color: var(--purple-dark); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-pay.loading .btn-text { display: none; }
+.btn-pay.loading .spinner { display: block; }
+.trust-row { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 14px; }
+.trust-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #7A6890; }
+.trust-item svg { color: #C99010; }
+.rzp-badge { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; font-size: 11px; color: #7A6890; }
+.rzp-logo { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #528FF0; }
+.consent-wrap { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 24px; cursor: pointer; }
+.consent-wrap input[type="checkbox"] { width: 17px; height: 17px; flex-shrink: 0; accent-color: var(--gold); margin-top: 2px; cursor: pointer; }
+.consent-text { font-size: 12px; color: #4A3D6A; line-height: 1.6; }
+.consent-text a { color: #C99010; text-decoration: none; }
+.checkout-footer { border-top: 1px solid var(--border); padding: 24px 32px; display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+.checkout-footer a { font-size: 12px; color: #7A6890; text-decoration: none; transition: color 0.2s; }
+.checkout-footer a:hover { color: #1A0838; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #FFFFFF; border: 1px solid rgba(74,24,154,0.14); border-radius: var(--radius); padding: 12px 20px; font-size: 13px; color: #1A0838; display: flex; align-items: center; gap: 10px; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { border-color: rgba(255,107,107,0.4); }
+.toast svg { flex-shrink: 0; }
+</style>
+</helmet>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">Neuro <em>Recode</em></a>
+  <div class="nav-secure">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    256-bit SSL Secured
+  </div>
+</nav>
+
+<div class="progress-bar">
+  <div class="progress-step done">
+    <div class="step-dot">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    Workshop Selected
+  </div>
+  <div class="progress-line done"></div>
+  <div class="progress-step active">
+    <div class="step-dot">2</div>
+    Your Details
+  </div>
+  <div class="progress-line"></div>
+  <div class="progress-step">
+    <div class="step-dot">3</div>
+    Confirmation
+  </div>
+</div>
+
+<div class="pulse-line"></div>
+
+<div class="page-wrap">
+  <div class="form-col">
+    <h1 class="form-section-title">Complete Your Registration</h1>
+    <p class="form-section-sub">Fill in your details below — takes less than 60 seconds.</p>
+
+    <form id="checkoutForm" novalidate="">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="firstName">First Name</label>
+          <input class="field-input" type="text" id="firstName" name="firstName" placeholder="e.g. Priya" autocomplete="given-name">
+          <p class="field-error" id="firstNameErr">Please enter your first name</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="lastName">Last Name</label>
+          <input class="field-input" type="text" id="lastName" name="lastName" placeholder="e.g. Kumar" autocomplete="family-name">
+          <p class="field-error" id="lastNameErr">Please enter your last name</p>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="email">Email Address</label>
+        <input class="field-input" type="email" id="email" name="email" placeholder="you@email.com" autocomplete="email">
+        <p class="field-error" id="emailErr">Please enter a valid email address</p>
+        <p class="field-hint">Your workshop link and confirmation will be sent here.</p>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="phone">WhatsApp Number</label>
+        <div class="phone-wrap">
+          <div class="phone-prefix">🇮🇳 +91</div>
+          <input class="field-input" type="tel" id="phone" name="phone" placeholder="98765 43210" autocomplete="tel-national" maxlength="10" inputmode="numeric">
+        </div>
+        <p class="field-error" id="phoneErr">Please enter a valid 10-digit number</p>
+        <p class="field-hint">Session details and reminders will be sent to this number.</p>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="city">City</label>
+        <input class="field-input" type="text" id="city" name="city" placeholder="e.g. Chennai" autocomplete="address-level2">
+        <p class="field-error" id="cityErr">Please enter your city</p>
+      </div>
+
+      <hr class="form-divider">
+
+      <label class="consent-wrap">
+        <input type="checkbox" id="consent" name="consent">
+        <span class="consent-text">
+          I agree to the <a href="#">Terms &amp; Conditions</a> and <a href="#">Privacy Policy</a>.
+          I understand this is an educational NLP workshop and not a medical or clinical service.
+        </span>
+      </label>
+      <p class="field-error" id="consentErr" style="margin-top:-16px; margin-bottom:16px;">Please accept the terms to continue</p>
+
+      <button type="submit" class="btn-pay" id="payBtn">
+        <span class="btn-text" style="display:flex;align-items:center;gap:10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Pay ₹149 Securely
+        </span>
+        <div class="spinner"></div>
+      </button>
+
+      <div class="trust-row">
+        <div class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Secure Payment</div>
+        <div class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Instant Confirmation</div>
+        <div class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>No Hidden Fees</div>
+        <div class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12.4 19.79 19.79 0 0 1 1.61 3.82 2 2 0 0 1 3.57 1.63h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4a16 16 0 0 0 6.29 6.29l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.93 17z"></path></svg>WhatsApp Support</div>
+      </div>
+
+      <div class="rzp-badge">
+        <span>Powered by</span>
+        <span class="rzp-logo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#528FF0"><path d="M21 12.5C21 17.19 17.19 21 12.5 21S4 17.19 4 12.5 7.81 4 12.5 4 21 7.81 21 12.5z"></path></svg>
+          Razorpay
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <div class="order-summary">
+    <p class="summary-eyebrow">Order Summary</p>
+    <div class="summary-product">
+      <div class="summary-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+      </div>
+      <div>
+        <p class="summary-product-name">Neuro Recode Live NLP Workshop</p>
+        <p class="summary-product-meta">3-Hour Live Session · Tamil · Online</p>
+      </div>
+    </div>
+    <div class="summary-line"><span>Original price</span><span class="strike">₹999</span></div>
+    <div class="summary-line"><span>Launch discount</span><span class="save-badge">− ₹850</span></div>
+    <div class="summary-line total"><span>Total</span><span style="color: #4B1A9E; font-weight: 700;">₹149</span></div>
+    <div class="summary-includes">
+      <p class="summary-includes-title">What's included</p>
+      <div class="summary-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>3-Hour live session with Sharfudheen</div>
+      <div class="summary-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Neuro Recode Daily Practice Guide PDF</div>
+      <div class="summary-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Private WhatsApp support group (7 days)</div>
+      <div class="summary-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>48-hour session replay access</div>
+      <div class="summary-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Live Q&amp;A with Sharfudheen</div>
+    </div>
+    <div class="seat-counter">
+      <div class="seat-dot"></div>
+      <span>Only <strong id="seatCount">--</strong> seats left for this weekend</span>
+    </div>
+  </div>
+</div>
+
+<footer class="checkout-footer">
+  <a href="#">Privacy Policy</a>
+  <a href="#">Terms &amp; Conditions</a>
+  <a href="#">Refund Policy</a>
+  <a href="mailto:deepan@neurorecode.in">Contact Support</a>
+  <span style="font-size:12px;color:var(--dim);">© 2026 Neuro Recode · Madurai, Tamil Nadu</span>
+</footer>
+
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="toastIcon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+  <span id="toastMsg"></span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  _toastTimer = null;
+
+  componentDidMount() {
+    let seats = Math.floor(Math.random() * 8) + 34;
+    const seatEl = document.getElementById('seatCount');
+    if (seatEl) seatEl.textContent = seats;
+    setInterval(() => {
+      if (seats > 12 && Math.random() < 0.3) {
+        seats--;
+        if (seatEl) seatEl.textContent = seats;
+      }
+    }, 18000);
+
+    const phoneEl = document.getElementById('phone');
+    if (phoneEl) {
+      phoneEl.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      });
+    }
+
+    const checks = {
+      firstName: v => v.length >= 2,
+      lastName:  v => v.length >= 2,
+      email:     v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      phone:     v => /^\d{10}$/.test(v),
+      city:      v => v.length >= 2
+    };
+    Object.keys(checks).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('blur', () => this._validate(id, id + 'Err', checks[id]));
+    });
+
+    const form = document.getElementById('checkoutForm');
+    if (form) {
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!this._runValidation()) {
+          this._showToast('Please fill in all required fields correctly.', true);
+          return;
+        }
+        const btn = document.getElementById('payBtn');
+        btn.disabled = true;
+        btn.classList.add('loading');
+
+        const name  = document.getElementById('firstName').value.trim() + ' ' + document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = '+91' + document.getElementById('phone').value.trim();
+
+        const city = document.getElementById('city').value.trim();
+        const THANK_YOU_URL = 'thank-you.html';
+        const storedLead = JSON.parse(sessionStorage.getItem('nr_lead') || 'null');
+        let order;
+
+        try {
+          const orderResponse = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              leadId: storedLead && storedLead.id,
+              name,
+              email,
+              phone,
+              city,
+              source: 'Checkout Page'
+            })
+          });
+          order = await orderResponse.json().catch(() => ({}));
+          if (!orderResponse.ok || !order.ok || !order.keyId || !order.orderId) {
+            throw new Error(order.error || 'Order creation failed');
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.classList.remove('loading');
+          this._showToast('Could not start payment. Please try again.', true);
+          console.error('Create order error:', err);
+          return;
+        }
+
+        const options = {
+          key:         order.keyId,
+          amount:      order.amount,
+          currency:    order.currency || 'INR',
+          order_id:    order.orderId,
+          name:        'Neuro Recode',
+          description: 'Live NLP Clarity Workshop - Rs.149',
+          image:       '',
+          prefill:     { name, email, contact: phone },
+          notes:       { city, workshop: 'Neuro Recode Live NLP Workshop' },
+          theme:       { color: '#4B1A9E' },
+          modal: {
+            ondismiss: () => {
+              btn.disabled = false;
+              btn.classList.remove('loading');
+              this._showToast('Payment was cancelled. You can try again anytime.', true);
+            }
+          },
+          handler: async resp => {
+            try {
+              const verifyResponse = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  leadId: order.leadId || (storedLead && storedLead.id),
+                  name,
+                  email,
+                  phone,
+                  city,
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_signature: resp.razorpay_signature
+                })
+              });
+              const verified = await verifyResponse.json().catch(() => ({}));
+              if (!verifyResponse.ok || !verified.ok) {
+                throw new Error(verified.error || 'Payment verification failed');
+              }
+
+              sessionStorage.setItem('nr_payment_id', resp.razorpay_payment_id);
+              sessionStorage.setItem('nr_name',  name);
+              sessionStorage.setItem('nr_email', email);
+              sessionStorage.setItem('nr_phone', phone);
+              window.location.href = THANK_YOU_URL;
+            } catch (err) {
+              btn.disabled = false;
+              btn.classList.remove('loading');
+              this._showToast('Payment received but verification failed. Please contact support.', true);
+              console.error('Verify payment error:', err);
+            }
+          }
+        };
+
+        try {
+          const rzp = new Razorpay(options);
+          rzp.on('payment.failed', resp => {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            this._showToast('Payment failed: ' + (resp.error.description || 'Please try again.'), true);
+          });
+          rzp.open();
+        } catch (err) {
+          btn.disabled = false;
+          btn.classList.remove('loading');
+          this._showToast('Could not open payment window. Please refresh and try again.', true);
+          console.error('Razorpay error:', err);
+        }
+      });
+    }
+  }
+
+  _validate(id, errId, check) {
+    const el  = document.getElementById(id);
+    const err = document.getElementById(errId);
+    if (!el || !err) return true;
+    const ok = check(el.value.trim());
+    el.classList.toggle('error', !ok);
+    err.classList.toggle('visible', !ok);
+    return ok;
+  }
+
+  _runValidation() {
+    const checks = {
+      firstName: v => v.length >= 2,
+      lastName:  v => v.length >= 2,
+      email:     v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      phone:     v => /^\d{10}$/.test(v),
+      city:      v => v.length >= 2
+    };
+    let allOk = Object.entries(checks).reduce((acc, [id, fn]) => this._validate(id, id + 'Err', fn) && acc, true);
+    const consent    = document.getElementById('consent');
+    const consentErr = document.getElementById('consentErr');
+    const consentOk  = consent && consent.checked;
+    if (consentErr) consentErr.classList.toggle('visible', !consentOk);
+    return allOk && consentOk;
+  }
+
+  _showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.toggle('error', isError);
+    t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
